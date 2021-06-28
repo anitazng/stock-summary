@@ -2,7 +2,7 @@
 
 ## Description
 
-A simple program that sends you an email summary of your investment portfolio perfomance. Provides current profit/loss percentage of each position in your portfolio as well as the daily P&L.
+A simple program that sends you an email summary of your investment portfolio perfomance. Provides current profit/loss percentage of each position in your portfolio, the daily P&L, and your total P&L for the day.
 
 Uses Outlook and Questrade account.
 
