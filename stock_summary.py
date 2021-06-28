@@ -4,40 +4,44 @@ from email.mime.text import MIMEText
 from datetime import date
 from questrade_api import Questrade
 
-def stock_price_summary(account_number):
+def stock_summary(account_number):
     # call api
     q = Questrade()
 
     # get account position details
     positions = q.account_positions(account_number)
     position_list = []
+    total_pnl = 0
     
     # calculate percentage gain/loss using current stock price
     for position in positions['positions']:
-        sym_and_percentage_gain_loss = {}
+        summary = {}
         
         symbol = position['symbol']
         entry_price = float(position['averageEntryPrice'])
         current_price = float(position['currentPrice'])
         
         percentage_gain_loss = round(((current_price - entry_price)/entry_price)*100, 2)
-        sym_and_percentage_gain_loss[symbol] = percentage_gain_loss
-        sym_and_percentage_gain_loss['Day P&L'] = position['dayPnl'] # grab pnl for reference
+        summary[symbol] = percentage_gain_loss
+        summary['Day P&L'] = position['dayPnl'] # grab pnl for reference
+        total_pnl += position['dayPnl']
         
-        position_list.append(sym_and_percentage_gain_loss)
+        position_list.append(summary)
     
-    return position_list
+    return (position_list, str(round(total_pnl, 2)))
 
     
 def send_email(sender, recipient, sender_password, trading_account_number):
-    # get today's date
     today = date.today()
+    position_list = stock_summary(trading_account_number)[0]
+    total_pnl = stock_summary(trading_account_number) [1]
     
     formatted_body = ''
-    for position in stock_price_summary(trading_account_number):
-        formatted_body += str(position) + '\n\n'
+    for position in position_list:
+        formatted_body += str(position) + '\n'
     
-    body = 'Here is your summary for today: \n\n' + formatted_body + '\n\n'
+    body = 'Here is your summary for today: \n\n' + formatted_body + '\n\n' + \
+           'Total P&L for the day: ' + total_pnl
     msg = MIMEMultipart()
     msg['Subject'] = 'Your Stock Summary: ' + today.strftime('%b-%d-%Y')
     msg['From'] = sender
